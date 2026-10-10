@@ -17,28 +17,35 @@ export default function DashboardPage() {
   const activeNode = nodes.find(node => String(node.id) === String(selectedNodeId)) || nodes[5];
   const currentStyle = styleMap[activeNode.status as keyof typeof styleMap] || styleMap.nominal;
 
-  const handleRunSimulation = () => {
+  // 1. Replaced the setTimeout mock with an async fetch targeting the live AWS backend
+  const handleRunSimulation = async () => {
     if (isSimulating) return;
     setIsSimulating(true);
 
-    setTimeout(() => {
-      // Simulate drought spreading: update node statuses and moisture levels
-      setNodes(prevNodes => 
-        prevNodes.map(node => {
-          if (node.id === 'node-1') {
-            return { ...node, status: 'warning' as const, moisture: 38, flowCapacity: 60 };
-          }
-          if (node.id === 'node-2') {
-            return { ...node, status: 'critical' as const, moisture: 20, flowCapacity: 45 };
-          }
-          if (node.id === 'node-3') {
-            return { ...node, status: 'warning' as const, moisture: 45, flowCapacity: 65 };
-          }
-          return node;
-        })
-      );
+    try {
+      const response = await fetch('http://65.0.21.127:8000/simulate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ current_nodes: nodes }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`AWS Server Error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // 2. Overwrite the frontend UI state with the live GraphSAGE predictions
+      if (data.updated_nodes) {
+        setNodes(data.updated_nodes);
+      }
+    } catch (error) {
+      console.error('Simulation request failed:', error);
+    } finally {
       setIsSimulating(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -129,7 +136,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* ORIGINAL CLEAN CARD LOOK WITH FUNCTIONAL SIMULATION TRIGGER */}
           <div 
             onClick={handleRunSimulation}
             className={`bg-[#0A1713] border rounded-xl p-6 transition-all cursor-pointer group ${

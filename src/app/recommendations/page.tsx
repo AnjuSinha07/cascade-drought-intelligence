@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type Priority = 'High' | 'Medium' | 'Low';
 type Category = 'All' | 'Water' | 'Agriculture' | 'Monitoring';
@@ -15,7 +15,7 @@ interface Recommendation {
   icon: string;
 }
 
-const RECOMMENDATIONS: Recommendation[] = [
+const DEFAULT_RECOMMENDATIONS: Recommendation[] = [
   { id: 'r1', category: 'Water', priority: 'High', title: 'Prioritize water conservation', desc: 'Review water use and identify opportunities to reduce avoidable losses across the watershed.', why: 'Useful when water availability is under pressure.', icon: '💧' },
   { id: 'r2', category: 'Agriculture', priority: 'High', title: 'Review irrigation schedules', desc: 'Use local soil moisture and weather information to guide irrigation decisions.', why: 'Helps inform water-efficient farm planning.', icon: '🌱' },
   { id: 'r3', category: 'Monitoring', priority: 'Medium', title: 'Monitor soil moisture', desc: 'Track soil moisture readings over time to help identify changing conditions.', why: 'Helps detect changes in soil water availability.', icon: '📡' },
@@ -25,8 +25,31 @@ const RECOMMENDATIONS: Recommendation[] = [
 ];
 
 export default function RecommendationsPage() {
+  // Converted static recommendations to dynamic state
+  const [recommendations, setRecommendations] = useState<Recommendation[]>(DEFAULT_RECOMMENDATIONS);
   const [filterCat, setFilterCat] = useState<Category>('All');
   const [reviewedIds, setReviewedIds] = useState<string[]>([]);
+  const [isLive, setIsLive] = useState(false);
+
+  // Fetch live recommendations from AWS EC2 backend on mount
+  useEffect(() => {
+    const fetchLiveRecommendations = async () => {
+      try {
+        const response = await fetch('http://65.0.21.127:8000/recommendations');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.recommendations && data.recommendations.length > 0) {
+            setRecommendations(data.recommendations);
+            setIsLive(true);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch live recommendations, falling back to demo data:', error);
+      }
+    };
+
+    fetchLiveRecommendations();
+  }, []);
 
   const handleReview = (id: string) => {
     setReviewedIds(prev => 
@@ -34,8 +57,8 @@ export default function RecommendationsPage() {
     );
   };
 
-  const filteredRecs = filterCat === 'All' ? RECOMMENDATIONS : RECOMMENDATIONS.filter(r => r.category === filterCat);
-  const highPriorityCount = RECOMMENDATIONS.filter(r => r.priority === 'High').length;
+  const filteredRecs = filterCat === 'All' ? recommendations : recommendations.filter(r => r.category === filterCat);
+  const highPriorityCount = recommendations.filter(r => r.priority === 'High').length;
 
   const getPriorityStyle = (priority: Priority) => {
     switch (priority) {
@@ -59,9 +82,9 @@ export default function RecommendationsPage() {
             Explore practical actions for water conservation, agricultural planning, and drought preparedness.
           </p>
         </div>
-        <div className="px-3 py-1.5 rounded-lg border border-emerald-800/50 bg-[#0A1713] text-[10px] text-emerald-400 uppercase flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-          Demo recommendations
+        <div className={`px-3 py-1.5 rounded-lg border flex items-center gap-2 text-[10px] uppercase ${isLive ? 'border-emerald-800/50 bg-[#0A1713] text-emerald-400' : 'border-amber-800/50 bg-[#17130A] text-amber-400'}`}>
+          <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isLive ? 'bg-cyan-400' : 'bg-amber-400'}`} />
+          {isLive ? 'Live AI Recommendations' : 'Demo Mode'}
         </div>
       </header>
 
@@ -69,18 +92,18 @@ export default function RecommendationsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="glass-panel bg-[#091510] p-5 rounded-2xl border border-emerald-900/50">
           <div className="text-[10px] uppercase tracking-wider text-emerald-500 mb-2">Available suggestions</div>
-          <div className="text-3xl font-mono font-bold text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]">{RECOMMENDATIONS.length}</div>
+          <div className="text-3xl font-mono font-bold text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]">{recommendations.length}</div>
           <div className="text-xs text-emerald-600/80 mt-1">Across three categories</div>
         </div>
         <div className="glass-panel bg-red-950/10 p-5 rounded-2xl border border-red-900/40 shadow-[inset_0_0_20px_rgba(239,68,68,0.05)]">
           <div className="text-[10px] uppercase tracking-wider text-red-400/80 mb-2">High-priority suggestions</div>
           <div className="text-3xl font-mono font-bold text-red-400 drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]">{highPriorityCount}</div>
-          <div className="text-xs text-red-500/70 mt-1">Illustrative priorities</div>
+          <div className="text-xs text-red-500/70 mt-1">Based on current stress index</div>
         </div>
         <div className="glass-panel bg-[#091510] p-5 rounded-2xl border border-emerald-900/50">
           <div className="text-[10px] uppercase tracking-wider text-emerald-500 mb-2">Marked reviewed</div>
           <div className="text-3xl font-mono font-bold text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]">{reviewedIds.length}</div>
-          <div className="text-xs text-emerald-600/80 mt-1">{RECOMMENDATIONS.length - reviewedIds.length} still to review</div>
+           <div className="text-xs text-emerald-600/80 mt-1">{recommendations.length - reviewedIds.length} still to review</div>
         </div>
       </div>
 
@@ -140,7 +163,7 @@ export default function RecommendationsPage() {
               {/* Action Bar */}
               <div className="mt-auto pt-5 border-t border-emerald-800/30 flex gap-3">
                 <button 
-                  onClick={() => alert(`Opening detailed plan for:\n\n"${rec.title}"\n\n(This will connect to backend documentation in production!)`)}
+                  onClick={() => alert(`Opening detailed plan for:\n\n"${rec.title}"`)}
                   className="flex-1 px-5 py-2.5 rounded-lg border border-cyan-700/50 text-xs font-semibold text-cyan-400 bg-cyan-950/20 hover:bg-cyan-900/40 hover:text-cyan-300 hover:shadow-[0_0_12px_rgba(34,211,238,0.2)] transition-all"
                 >
                   View next steps
@@ -160,14 +183,6 @@ export default function RecommendationsPage() {
             </div>
           );
         })}
-      </div>
-
-      {/* Warning Banner */}
-      <div className="mt-8 border border-emerald-800/50 bg-[#081812] rounded-xl p-4 flex gap-3 shadow-inner">
-        <span className="text-emerald-500">ℹ️</span>
-        <p className="text-xs text-emerald-400/80 leading-relaxed">
-          <strong className="text-emerald-300">Prototype note:</strong> These suggestions are illustrative.
-        </p>
       </div>
 
     </main>
