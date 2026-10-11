@@ -217,3 +217,39 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* CASCADE — slow, subtle water movement */
+
+.cascade-wave {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cascade-water-drift 18s ease-in-out infinite alternate;
+}
+
+.cascade-wave-back {
+  animation-duration: 24s;
+}
+
+.cascade-wave-front {
+  animation-duration: 17s;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes cascade-water-drift {
+  from {
+    transform: translateX(-35px) translateY(0);
+  }
+
+  to {
+    transform: translateX(35px) translateY(5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .cascade-wave,
+  .cascade-wave-back,
+  .cascade-wave-front {
+    animation: none !important;
+  }
+}
