@@ -48,6 +48,37 @@ export default function DataGraphsPage() {
   // Determine unit based on tab
   const getUnit = () => activeTab === 'Rainfall' ? 'mm' : '%';
 
+  // Professional Executive-Grade CSV Export Handler
+  const handleExportCSV = () => {
+    const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+    const csvRows = [
+      [`"CASCADE DROUGHT INTELLIGENCE - EXECUTIVE TELEMETRY REPORT"`],
+      [`"Generated Timestamp: ${timestamp}"`],
+      [`"Active Indicator Metric: ${activeTab}"`],
+      [`"Period Summary: Average = ${avgVal} ${getUnit()} | Peak = ${maxVal} ${getUnit()} (${maxMonth}) | Trough = ${minVal} ${getUnit()} (${minMonth})"`],
+      [], // Clean separator row
+      ["Month", "Metric Type", `Reading Value (${getUnit()})`, "Status Evaluation"],
+      ...currentData.map(d => [
+        d.month,
+        activeTab,
+        d.value,
+        d.value === minVal ? "Critical Low Threshold" : d.value >= 80 ? "Optimal Range" : "Moderate Range"
+      ])
+    ];
+
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      csvRows.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `cascade_${activeTab.toLowerCase().replace(' ', '_')}_executive_report.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <main className="min-h-screen bg-[#06110D] p-5 text-emerald-50 md:p-8 font-sans overflow-x-hidden">
       
@@ -67,7 +98,10 @@ export default function DataGraphsPage() {
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
             Demonstration data
           </div>
-          <button className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-cyan-600 text-white text-xs font-bold uppercase tracking-wider hover:shadow-[0_0_15px_#38BDF8] transition-shadow">
+          <button 
+            onClick={handleExportCSV}
+            className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-cyan-600 text-white text-xs font-bold uppercase tracking-wider hover:shadow-[0_0_15px_#38BDF8] transition-shadow cursor-pointer"
+          >
             ↓ Export CSV
           </button>
         </div>
@@ -89,7 +123,7 @@ export default function DataGraphsPage() {
           { label: 'Lowest reading', value: minVal.toString(), unit: getUnit(), note: `Recorded in ${minMonth}`, color: 'text-amber-400' },
           { label: 'Latest reading', value: latestVal.toString(), unit: getUnit(), note: 'Dec reading', color: 'text-emerald-100' },
         ].map((stat, i) => (
-          <div key={i} className="glass-panel p-5 rounded-2xl border border-emerald-900/40">
+          <div key={i} className="glass-panel p-5 rounded-2xl border border-emerald-900/40 bg-[#0A1713]/50">
             <div className="text-[10px] uppercase tracking-wider text-emerald-500 mb-2">{stat.label}</div>
             <div className={`text-3xl font-mono font-bold ${stat.color} drop-shadow-md`}>
               {stat.value} <span className="text-sm font-sans text-emerald-600">{stat.unit}</span>
@@ -100,7 +134,7 @@ export default function DataGraphsPage() {
       </div>
 
       {/* Main Line Chart Panel */}
-      <div className="glass-panel p-6 rounded-2xl border border-emerald-900/40 mb-6">
+      <div className="glass-panel p-6 rounded-2xl border border-emerald-900/40 bg-[#0A1713]/50 mb-6">
         <div className="flex justify-between items-center mb-6">
           <div>
             <h3 className="text-sm font-semibold tracking-wide uppercase text-emerald-100">{activeTab} Trend</h3>
@@ -111,7 +145,7 @@ export default function DataGraphsPage() {
               <button 
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${activeTab === tab ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-[0_0_10px_rgba(56,189,248,0.2)]' : 'bg-[#0A1713] text-emerald-500 border border-emerald-800/50 hover:bg-emerald-900/30'}`}
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeTab === tab ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-[0_0_10px_rgba(56,189,248,0.2)]' : 'bg-[#0A1713] text-emerald-500 border border-emerald-800/50 hover:bg-emerald-900/30'}`}
               >
                 {tab}
               </button>
@@ -138,7 +172,7 @@ export default function DataGraphsPage() {
             <polyline points={points} fill="none" stroke="#38BDF8" strokeWidth="4" className="drop-shadow-[0_0_8px_#38BDF8] transition-all duration-500 ease-in-out" />
             {/* Data Dots */}
             {currentData.map((d, i) => (
-              <circle key={i} cx={i * stepX} cy={maxH - (d.value / 100) * maxH} r="5" fill="#06110D" stroke="#38BDF8" strokeWidth="3" className="drop-shadow-[0_0_5px_#38BDF8] hover:r-8 transition-all duration-500 ease-in-out cursor-pointer" />
+              <circle key={i} cx={i * stepX} cy={maxH - (d.value / 100) * maxH} r="5" fill="#06110D" stroke="#38BDF8" strokeWidth="3" className="drop-shadow-[0_0_5px_#38BDF8] transition-all duration-500 ease-in-out cursor-pointer" />
             ))}
           </svg>
           
@@ -151,7 +185,7 @@ export default function DataGraphsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Bar Chart Panel (Dynamic) */}
-        <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-emerald-900/40">
+        <div className="lg:col-span-2 glass-panel p-6 rounded-2xl border border-emerald-900/40 bg-[#0A1713]/50">
           <h3 className="text-sm font-semibold tracking-wide uppercase text-emerald-100 mb-1">Monthly Comparison</h3>
           <p className="text-[10px] text-emerald-500 mb-6">Compare individual monthly readings.</p>
           
@@ -179,7 +213,7 @@ export default function DataGraphsPage() {
         </div>
 
         {/* Insights Panel (Dynamic) */}
-        <div className="glass-panel p-6 rounded-2xl border border-emerald-900/40">
+        <div className="glass-panel p-6 rounded-2xl border border-emerald-900/40 bg-[#0A1713]/50">
           <h3 className="text-sm font-semibold tracking-wide uppercase text-emerald-100 mb-1">What the data tells us</h3>
           <p className="text-[10px] text-emerald-500 mb-6">Insights calculated from the selected readings.</p>
           
@@ -210,7 +244,7 @@ export default function DataGraphsPage() {
       </div>
 
       {/* Data Table (Dynamic) */}
-      <div className="glass-panel p-6 rounded-2xl border border-emerald-900/40">
+      <div className="glass-panel p-6 rounded-2xl border border-emerald-900/40 bg-[#0A1713]/50">
         <div className="flex justify-between items-end mb-4">
           <div>
             <h3 className="text-sm font-semibold tracking-wide uppercase text-emerald-100">Monthly Readings</h3>
