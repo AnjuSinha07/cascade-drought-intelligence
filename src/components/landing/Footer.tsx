@@ -1,3 +1,5 @@
+"use client"
+
 import Link from "next/link";
 import { Waves, ArrowUpRight } from "lucide-react";
 
@@ -32,7 +34,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 flex flex-col gap-2 border-t border-white/[0.06] pt-5 text-[11px] text-slate-600 sm:flex-row sm:justify-between">
-          <span>© {new Date().getFullYear()} CASCADE</span>
+          <span>© 2026 CASCADE</span>
           <span>Predictive watershed intelligence</span>
         </div>
       </div>

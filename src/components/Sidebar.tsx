@@ -5,13 +5,13 @@ import { usePathname } from 'next/navigation';
 
 const NAV_ITEMS = [
   { name: 'Dashboard', path: '/', short: 'Dash' },
-  { name: 'Impact Analysis', path: '/impact-analysis', short: 'Impact' },
-  { name: 'Data Graphs', path: '/data-graphs', short: 'Data' },
-  { name: 'Basin Map', path: '/basin-map', short: 'Map' },
-  { name: 'Simulation', path: '/simulation', short: 'Sim' },
-  { name: 'Recommendations', path: '/recommendations', short: 'Recs' },
-  { name: 'Reports', path: '/reports', short: 'Reports' },
-  { name: 'Settings', path: '/settings', short: 'Set' },
+  { name: 'Impact Analysis', path: '/dashboard/impact-analysis', short: 'Impact' },
+  { name: 'Data Graphs', path: '/dashboard/data-graphs', short: 'Data' },
+  { name: 'Basin Map', path: '/dashboard/basin-map', short: 'Map' },
+  { name: 'Simulation', path: '/dashboard/simulation', short: 'Sim' },
+  { name: 'Recommendations', path: '/dashboard/recommendations', short: 'Recs' },
+  { name: 'Reports', path: '/dashboard/reports', short: 'Reports' },
+  { name: 'Settings', path: '/dashboard/settings', short: 'Set' },
 ];
 
 export default function Sidebar() {
